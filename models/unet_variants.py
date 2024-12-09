@@ -36,7 +36,7 @@ class ReUNet(nn.Module):
                      num_layers=num_layers)
         ]
         if self.skip_connection:
-            layers.append(MLP(in_features=self.reversed_filters[i],
+            layers.append(MLP(in_features=self.reversed_filters[i+1] * 2,
                               out_features=self.reversed_filters[i+1]))
         block = nn.Sequential(*layers)
         self.down_blocks.append(block)
