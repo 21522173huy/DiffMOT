@@ -15,11 +15,11 @@ class D2MP(Module):
         
         network = config.network
         if network == 'ReUNet':
-          net = ReUNet(num_layers = config.num_layers , filters = config.filters)
+          net = ReUNet(num_layers = config.num_layers , filters = config.filters, skip_connection = config.skip_connection)
         elif network == 'ReUNet+++':
-          net = ReUNet3Plus(num_layers = config.num_layers , filters = config.filters)
+          net = ReUNet3Plus(num_layers = config.num_layers , filters = config.filters, skip_connection = config.skip_connection)
         elif network == 'Smaller':
-          net = ReUNet3Plus_Smaller(num_layers = config.num_layers , filters = config.filters)
+          net = ReUNet3Plus_Smaller(num_layers = config.num_layers , filters = config.filters, skip_connection = config.skip_connection)
 
         self.diffusion = D2MP_OB(
             # net = self.diffnet(point_dim=2, context_dim=config.encoder_dim, tf_layer=config.tf_layer, residual=False),

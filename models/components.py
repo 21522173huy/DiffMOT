@@ -34,7 +34,7 @@ class MLP(nn.Module):
     return output_x
 
 class TransAoA(nn.Module):
-  def __init__(self, input_size, output_size, num_layers, hidden_size = 256):
+  def __init__(self, input_size, output_size, num_layers, skip_connection = False, hidden_size = 256):
     super(TransAoA, self).__init__()
     layer = nn.TransformerDecoderLayer(d_model=hidden_size,
                                         nhead=1,
