@@ -25,6 +25,7 @@ def parse_args():
     parser.add_argument('--skip_connection', type=str2bool, default=False, help='Skp connection')
     parser.add_argument('--data_dir', default=None, help='Path to the data directory')
     parser.add_argument('--epochs', type=int, default=None, help='Number of epochs')
+    parser.add_argument('--do_early_stopping', type=str2bool, default=True, help='Early Stopping')
     return parser.parse_args()
 
 def main():
@@ -52,6 +53,7 @@ def main():
         config.filters = args.filters
     if args.skip_connection is not None:
         config.skip_connection = args.skip_connection
+    config.do_early_stopping = args.do_early_stopping
 
     agent = DiffMOT(config)
 
