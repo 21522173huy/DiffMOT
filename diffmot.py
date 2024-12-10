@@ -21,7 +21,7 @@ from tracking_utils.timer import Timer
 
 # This line is for training
 from utils import calculate_iou, calculate_ade, original_shape
-from early_stopping import EarlyStopping
+from early_stopping import EarlyStopping_Loss, EarlyStopping_IoU
 
 def write_results(filename, results, data_type='mot'):
     if data_type == 'mot':
