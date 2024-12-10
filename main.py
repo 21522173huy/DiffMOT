@@ -53,7 +53,7 @@ def main():
         config.filters = args.filters
     if args.skip_connection is not None:
         config.skip_connection = args.skip_connection
-    config.do_early_stopping = args.do_early_stopping
+    config.early_stopping = args.early_stopping
 
     agent = DiffMOT(config)
 
