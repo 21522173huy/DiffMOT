@@ -127,11 +127,29 @@ class DiffMOT():
             print(f"Val   - Loss: {val_metrics['mean_loss']:.6f}, IoU: {val_metrics['mean_iou']:.6f}, ADE: {val_metrics['mean_ade']:.6f}")
 
             # Early Stopping
-            if self.config.do_early_stopping: 
-                self.early_stopping(val_metrics['mean_loss'], self.model, epoch, self.optimizer, self.scheduler, self.model_dir, self.config.dataset)
-                if self.early_stopping.early_stop:
-                    print("Early stopping")
-                    break
+    def train(self):
+        for epoch in range(1, self.config.epochs + 1):
+            print("Training")
+            train_metrics = self.step(data_loader = self.train_dataloader, train=True)
+            print("Validation")
+            val_metrics = self.step(data_loader = self.val_dataloader, train=False)
+
+            self.scheduler.step()
+
+            print(f"Epoch {epoch}/{self.config.epochs}")
+            print(f"Train - Loss: {train_metrics['mean_loss']:.6f}, IoU: {train_metrics['mean_iou']:.6f}, ADE: {train_metrics['mean_ade']:.6f}")
+            print(f"Val   - Loss: {val_metrics['mean_loss']:.6f}, IoU: {val_metrics['mean_iou']:.6f}, ADE: {val_metrics['mean_ade']:.6f}")
+
+            # Early Stopping
+            if self.config.early_stopping == 'loss':
+                score = val_metrics['mean_loss']
+            elif self.config.early_stopping == 'iou':
+                score = val_metrics['mean_iou']
+
+            self.early_stopping(score, self.model, epoch, self.optimizer, self.scheduler, self.model_dir, self.config.dataset)
+            if self.early_stopping.early_stop:
+                print("Early stopping")
+                break
 
     # def eval(self):
     #     det_root = self.config.det_dir
@@ -235,7 +253,10 @@ class DiffMOT():
     def _build_optimizer(self):
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.config.lr)
         self.scheduler = optim.lr_scheduler.ExponentialLR(self.optimizer,gamma=0.98)
-        self.early_stopping = EarlyStopping(patience=self.config.patience, delta=self.config.delta)
+        if self.config.early_stopping == 'loss':
+            self.early_stopping = EarlyStopping_Loss(patience=self.config.patience, delta=self.config.delta)
+        elif self.config.early_stopping == 'iou':
+            self.early_stopping = EarlyStopping_IoU(patience=self.config.patience, delta=self.config.delta)
         print("> Optimizer built!")
 
     def _build_encoder(self):
