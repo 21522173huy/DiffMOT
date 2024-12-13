@@ -139,12 +139,12 @@ class History_motion_embedding(nn.Module):
         n, b, d = q_patch.shape
 
         cls_tokens = repeat(self.cls_token, '() n d -> b n d', b=b).permute(1, 0, 2).contiguous()
-        encoder_patch = torch.cat((q_patch, cls_tokens), dim=0)
+        encoder_patch = torch.cat((cls_tokens, q_patch), dim=0)
 
         for i in range(self.cascade_num):
             en_out = self.trca[i](src=encoder_patch, pos=pos)
             encoder_patch = en_out
 
-        out = en_out[0].view(b, 1, d).contiguous()
+        out = en_out[-1].view(b, 1, d).contiguous()
         return out
 

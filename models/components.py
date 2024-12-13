@@ -32,6 +32,44 @@ class MLP(nn.Module):
     ffn_x = self.dense_layer(normalized_x)
     output_x = self.dropout(ffn_x)
     return output_x
+  
+class LSTMAoA(nn.Module):
+  def __init__(self, input_size, output_size, num_layers, hidden_size = 256):
+    super(LSTMAoA, self).__init__()
+
+    self.out_dropout = nn.Dropout(0.1)
+    self.norm = nn.LayerNorm(input_size + hidden_size)
+
+    self.att_lstm = nn.LSTM(input_size + hidden_size, hidden_size, num_layers = num_layers)
+    self.multi_head = nn.MultiheadAttention(embed_dim = hidden_size, num_heads = 8)
+
+    self.aoa_layer = nn.Sequential(
+        nn.Linear(hidden_size * 2, hidden_size * 2),
+        nn.GLU()
+    )
+
+    self.residual_fn = ResidualConnection(hidden_size)
+    self.out_linear = nn.Linear(hidden_size, output_size)
+
+  def forward(self, input, ctx):
+    # Prepare Inputs
+    features_concat = self.norm(torch.cat([ctx, input], dim = -1)) # batch_size, hidden_size + input_size
+
+    # LSTM
+    output, (_, _) = self.att_lstm(features_concat) # batch_size, hidden_size
+
+    # Calculate Attention
+    att, _ = self.multi_head(output, ctx, ctx) # batch_size, hidden_size
+
+    # Applying AoA
+    attn_concat = torch.cat([att, output], dim = -1) # batch_size, hidden_size
+    output_ = self.aoa_layer(attn_concat) # batch_size, sequence_length, embedding_size
+
+    # Add Residual Connect
+    residual_aoa = self.residual_fn(output_, output) # batch_size, sequence_length, embedding_size
+
+    # Output
+    return self.out_linear(self.out_dropout(residual_aoa)) # batch_size, sequence_length, vocab_size
 
 class TransAoA(nn.Module):
   def __init__(self, input_size, output_size, num_layers, skip_connection = False, hidden_size = 256):

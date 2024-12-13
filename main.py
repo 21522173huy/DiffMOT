@@ -22,7 +22,7 @@ def parse_args():
     parser.add_argument('--network', choices=['ReUNet', 'ReUNet+++', 'Smaller'], help='Unet version')
     parser.add_argument('--num_layers', type=int, default=1, help='Number of layers in the network')
     parser.add_argument('--filters', type=list, default=[16, 64, 128, 256], help='Depth of the network')
-    parser.add_argument('--skip_connection', type=str2bool, default=False, help='Skp connection')
+    parser.add_argument('--skip_connection', type=str2bool, default=True, help='Skp connection')
     parser.add_argument('--data_dir', default=None, help='Path to the data directory')
     parser.add_argument('--epochs', type=int, default=None, help='Number of epochs')
     parser.add_argument('--early_stopping', choices=['loss', 'iou'])
