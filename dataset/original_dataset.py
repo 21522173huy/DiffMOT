@@ -82,7 +82,9 @@ class DiffMOTDataset(Dataset):
         conds = np.concatenate((np.array(boxes)[1:], np.array(delt_boxes)), axis=1)
 
         delt = cur_bbox - boxes[-1]
-        ret = {"cur_gt": cur_gt, "cur_bbox": cur_bbox, "condition": conds, "delta_bbox": delt}
+        width, height = cur_gt[7:9]
+        
+        ret = {"cur_gt": cur_gt, "cur_bbox": cur_bbox, "condition": conds, "delta_bbox": delt, "width": width, "height": height}
 
         return ret
 
