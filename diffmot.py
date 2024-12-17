@@ -9,7 +9,6 @@ from torch import nn, optim, utils
 from tensorboardX import SummaryWriter
 from tqdm.auto import tqdm
 
-from dataset.dataset import DiffMOTDataset
 from models.autoencoder import D2MP
 from models.condition_embedding import History_motion_embedding
 
@@ -288,16 +287,37 @@ class DiffMOT():
         config = self.config
         data_path = config.data_dir
 
-        train_path = f'{data_path}/train'
-        print("Train Dataset: " + train_path)
-        self.train_dataset = DiffMOTDataset(train_path, config)
-        print("len: ", len(self.train_dataset))
+        if config.dataset == 'dancetrack':
+            from dataset.dataset import DiffMOTDataset
 
-        print("="*80)
-        val_path = f'{data_path}/val'
-        print("Validation Dataset: " + val_path)
-        self.val_dataset = DiffMOTDataset(val_path, config)
-        print("len: ", len(self.val_dataset))
+            train_path = f'{data_path}/train'
+            print("Train Dataset: " + train_path)
+            self.train_dataset = DiffMOTDataset(train_path, config)
+            print("len: ", len(self.train_dataset))
+
+            print("="*80)
+            val_path = f'{data_path}/val'
+            print("Validation Dataset: " + val_path)
+            self.val_dataset = DiffMOTDataset(val_path, config)
+            print("len: ", len(self.val_dataset))
+
+        elif config.dataset =='mot':
+            from torch.utils.data import random_split
+            from dataset.original_dataset import DiffMOTDataset
+
+            path = f'{data_path}/train'
+            print("Dataset: " + path)
+            full_dataset = DiffMOTDataset(path, config)
+            print("len: ", len(full_dataset))
+
+            # Split the dataset into training and validation sets
+            train_size = int(0.8 * len(full_dataset))
+            val_size = len(full_dataset) - train_size
+            self.train_dataset, self.val_dataset = random_split(full_dataset, [train_size, val_size])
+
+            print("="*80)
+            print("Training Dataset size: ", len(self.train_dataset))
+            print("Validation Dataset size: ", len(self.val_dataset))
 
         self.train_dataloader = utils.data.DataLoader(
             self.train_dataset,

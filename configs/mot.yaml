@@ -5,7 +5,7 @@ eval_mode: False
 # optimizer
 lr: 0.0001
 # train
-data_dir: '/mnt/8T/home/estar/data/DanceTrack/trackers_gt_GSI'
+data_dir: 'dataset/trackers_gt_t'
 diffnet: HMINet
 interval: 5
 augment: True
