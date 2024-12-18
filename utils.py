@@ -23,7 +23,8 @@ def original_shape(boxes, width, height):
     boxes_copy[:, 0] = boxes_copy[:, 0] - boxes_copy[:, 2] / 2
     boxes_copy[:, 1] = boxes_copy[:, 1] - boxes_copy[:, 3] / 2
 
-    return torch.round(boxes_copy * 10) / 10
+    # return torch.round(boxes_copy * 10) / 10
+    return torch.round(boxes_copy)
 
 def visualize_bbox(image_path, bbox):
     """
