@@ -70,6 +70,7 @@ class DiffMOTDataset(Dataset):
                 break
 
         track_path = self.trackers[ds][trk]
+        print(f'Overhear', track_path)
         track_gt = np.loadtxt(track_path, dtype=np.float32)
 
         init_index = files_index - start_index
