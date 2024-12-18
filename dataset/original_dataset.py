@@ -75,7 +75,11 @@ class DiffMOTDataset(Dataset):
         init_index = files_index - start_index
 
         cur_index = init_index + self.interval
+            
         cur_gt = track_gt[cur_index]
+        if len(cur_gt.shape) == 1:
+            cur_gt = np.expand_dims(cur_gt, axis=0)
+            
         cur_bbox = cur_gt[2:6]
 
         boxes = [track_gt[init_index + tmp_ind][2:6] for tmp_ind in range(self.interval)]
