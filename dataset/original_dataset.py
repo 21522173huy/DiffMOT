@@ -23,7 +23,7 @@ class DiffMOTDataset(Dataset):
         self.cds = {}
         if os.path.isdir(path):
             if 'MOT' in path:
-                self.seqs = ["MOT17-02", "MOT17-04", "MOT17-05", "MOT17-09", "MOT17-10", "MOT17-11", "MOT17-13", "MOT20-01", "MOT20-02", "MOT20-03", "MOT20-05"]
+                self.seqs = ["MOT17-02-DPM", "MOT17-04-DPM", "MOT17-05-DPM", "MOT17-09-DPM", "MOT17-10-DPM", "MOT17-11-DPM", "MOT17-13-DPM", "MOT20-01", "MOT20-02", "MOT20-03", "MOT20-05"]
             else:
                 self.seqs = [s for s in os.listdir(path)]
             self.seqs.sort()
@@ -36,12 +36,13 @@ class DiffMOTDataset(Dataset):
                     imagePath = os.path.join(path, '../../images/train', seq, "img1/*.*")
                 else:
                     imagePath = os.path.join(path, '../train', seq, "img1/*.*")
+                imagePath = os.path.normpath(imagePath) # Normalize path for Windows
                 self.images[seq] = sorted(glob.glob(imagePath))
                 self.nframes[seq] = len(self.images[seq])
 
                 self.nsamples[seq] = {}
                 for i, pa in enumerate(self.trackers[seq]):
-                    self.nsamples[seq][i] = len(np.loadtxt(pa, dtype=np.float32).reshape(-1,7)) - self.interval
+                    self.nsamples[seq][i] = len(np.loadtxt(pa, dtype=np.float32)) - self.interval
                     self.nS += self.nsamples[seq][i]
 
 

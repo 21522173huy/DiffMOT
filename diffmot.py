@@ -289,7 +289,6 @@ class DiffMOT():
 
         if config.dataset == 'dancetrack':
             from dataset.dataset import DiffMOTDataset
-
             train_path = f'{data_path}/train'
             print("Train Dataset: " + train_path)
             self.train_dataset = DiffMOTDataset(train_path, config)
@@ -302,10 +301,10 @@ class DiffMOT():
             print("len: ", len(self.val_dataset))
 
         elif config.dataset =='mot':
-            from torch.utils.data import random_split
             from dataset.original_dataset import DiffMOTDataset
+            from torch.utils.data import random_split
 
-            path = f'{data_path}/train'
+            path = f'{data_path}'
             print("Dataset: " + path)
             full_dataset = DiffMOTDataset(path, config)
             print("len: ", len(full_dataset))

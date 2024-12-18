@@ -21,12 +21,17 @@ class DiffMOTDataset(Dataset):
         self.data = []  
 
         if os.path.isdir(path):
-            self.seqs = [s for s in os.listdir(path) if not s.startswith('.') and "gt_t" not in s]
+            if 'MOT' in path:
+                self.seqs = ["MOT17-02", "MOT17-04", "MOT17-05", "MOT17-09", "MOT17-10", "MOT17-11", "MOT17-13", "MOT20-01", "MOT20-02", "MOT20-03", "MOT20-05"]
+            else:
+                self.seqs = [s for s in os.listdir(path) if not s.startswith('.') and "gt_t" not in s]
             self.seqs.sort()
             
             for seq in self.seqs:
                 trackerPath = os.path.join(path, seq, "img1/*.txt")
-                self.trackers[seq] = sorted(glob.glob(trackerPath))
+                normalized_path = os.path.normpath(trackerPath) # Normalize path for Windows
+                
+                self.trackers[seq] = sorted(glob.glob(normalized_path))
                 
                 for pa in self.trackers[seq]:
                     gt = np.loadtxt(pa, dtype=np.float32)

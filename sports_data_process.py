@@ -9,7 +9,7 @@ def mkdirs(d):
 
 
 seq_root = 'dataset/train'
-label_root = 'dataset/trackers_gt_t/train'
+label_root = 'dataset/trackers_gt/train'
 mkdirs(label_root)
 seqs = [s for s in os.listdir(seq_root)]
 

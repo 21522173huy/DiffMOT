@@ -15,7 +15,7 @@ num_layers: 2
 filters: [16, 64, 128, 256]
 
 # train
-data_dir: 'dataset/trackers_gt_t'
+data_dir: 'dataset/trackers_gt_t/train'
 diffnet: HMINet
 interval: 5
 augment: True
