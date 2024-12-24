@@ -50,27 +50,12 @@ class D2MP(Module):
                 tmp_conds = torch.cat((tmp_conds, pad_conds), dim=0)[:5]
             cond_encodeds.append(tmp_conds.unsqueeze(0))
         cond_encodeds = torch.cat(cond_encodeds)
+        cond_encodeds = self.encoder(cond_encodeds)
 
-        point_dim = 8 # For Linear model
-        if self.config.network != 'linear':
-          cond_encodeds = self.encoder(cond_encodeds)
-          point_dim = 4
-
-        track_pred = self.diffusion.sample(cond_encodeds, sample, bestof, point_dim = point_dim, flexibility=flexibility, ret_traj=ret_traj)
+        track_pred = self.diffusion.sample(cond_encodeds, sample, bestof, flexibility=flexibility, ret_traj=ret_traj)
         return track_pred.cpu().detach().numpy()
 
     def forward(self, batch):
-        if self.config.network != 'linear':
-           return self.forward_unet(batch)
-        else:
-           return self.forward_linear(batch)
-        
-    def forward_unet(self, batch):
         cond_encoded = self.encoder(batch["condition"]) # B * 64
         loss = self.diffusion(batch["delta_bbox"], cond_encoded)
         return loss
-
-    def forward_linear(self, batch):
-       input = torch.cat([batch['cur_bbox'], batch['delta_bbox']], dim=1) # B, 8
-       loss = self.diffusion(input, batch["condition"])
-       return loss
