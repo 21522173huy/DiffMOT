@@ -62,7 +62,7 @@ class DiffMOT():
     def generate(self, conds, sample = 1, bestof = True, flexibility = 0.0, ret_traj = False):
 
         cond_encodeds = self.model.encoder(conds)
-        track_pred = self.model.diffusion.sample(cond_encodeds, sample, bestof, point_dim = self.point_dim, flexibility=flexibility, ret_traj=ret_traj)
+        track_pred = self.model.diffusion.sample(cond_encodeds, sample, bestof, flexibility=flexibility, ret_traj=ret_traj)
         return track_pred.squeeze(dim=0)
 
     def step(self, data_loader, train=True):
