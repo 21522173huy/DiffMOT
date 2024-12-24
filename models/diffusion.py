@@ -91,9 +91,6 @@ class HMINet(Module):
         trans = self.concat4(ctx_emb, trans)
         return self.linear(ctx_emb, trans)
 
-
-
-
 class D2MP_OB(Module):
 
     def __init__(self, net, var_sched:VarianceSchedule, config):
@@ -139,29 +136,37 @@ class D2MP_OB(Module):
         C = -1 * x_0
         x_noisy = self.q_sample(x_start=x_0, noise=e_rand, t=t, C=C)
         t = t.reshape(-1, 1)
+        
+        if context.dim() != 3: # Batch,, 64
+            print("context shape hihi", context.shape)
+            pred = self.net(x_noisy, beta=beta, context=context)
 
-        pred = self.net(x_noisy, beta=beta, context=context)
+        else: # Batch, interval, 8
+            print("context shape haha", context.shape)
+            input = torch.cat([x_noisy.unsqueeze(dim=1), context], dim=1) # Batch, interval + 1, 8
+            pred = self.net(input, beta=beta)
+
         C_pred = pred
         noise_pred = (x_noisy - (t - 1) * C_pred) / t.sqrt()
+
         if not self.weight:
-            loss_C = F.smooth_l1_loss(C_pred.view(-1, point_dim), C.view(-1, point_dim), reduction='mean')
-            # loss_x0 = F.smooth_l1_loss(x_rec.view(-1, point_dim), x_0.view(-1, point_dim), reduction='mean')
-            loss_noise = F.smooth_l1_loss(noise_pred.view(-1, point_dim), e_rand.view(-1, point_dim), reduction='mean')
-            loss = 0.5 * loss_C + 0.5 * loss_noise
+            weight_1 = 0.5
+            weight_2 = 0.5
+            reduction = 'mean'
         else:
-            simple_weight1 = (t ** 2 - t + 1) / t
-            simple_weight2 = (t ** 2 - t + 1) / (1 - t + self.eps)
+            weight_1 = (t ** 2 - t + 1) / t
+            weight_2 = (t ** 2 - t + 1) / (1 - t + self.eps)
+            reduction = 'none'
 
-            # simple_weight1 = (t + 1) / t
-            # simple_weight2 = (2 - t) / (1 - t + self.eps)
+        if self.config.loss == 'l2':
+            loss_C = F.mse_loss(C_pred.view(-1, point_dim), C.view(-1, point_dim), reduction=reduction)
+            loss_noise = F.mse_loss(noise_pred.view(-1, point_dim), e_rand.view(-1, point_dim), reduction=reduction)
+        else:
+            loss_C = F.smooth_l1_loss(C_pred.view(-1, point_dim), C.view(-1, point_dim), reduction=reduction)
+            loss_noise = F.smooth_l1_loss(noise_pred.view(-1, point_dim), e_rand.view(-1, point_dim), reduction=reduction)
 
-            loss_C = F.smooth_l1_loss(C_pred.view(-1, point_dim), C.view(-1, point_dim), reduction='none')
-            # loss_x0 = F.smooth_l1_loss(x_rec.view(-1, point_dim), x_0.view(-1, point_dim), reduction='none')
-            loss_noise = F.smooth_l1_loss(noise_pred.view(-1, point_dim), e_rand.view(-1, point_dim), reduction='none')
-            loss = simple_weight1 * loss_C + simple_weight2 * loss_noise
-            loss = loss.mean()
-
-            # loss = F.smooth_l1_loss(noise_pred.view(-1, point_dim), e_rand.view(-1, point_dim), reduction='mean')
+        loss = weight_1 * loss_C + weight_2 * loss_noise
+        loss = loss.mean()
 
         return loss
 
@@ -188,7 +193,14 @@ class D2MP_OB(Module):
                 x_t = traj[t]
                 beta = cur_time.log() / 4
                 t_tmp = cur_time.reshape(-1, 1)
-                pred = self.net(x_t, beta=beta, context=context)
+
+                if context.dim() != 3: # Batch,, 64
+                    pred = self.net(x_t, beta=beta, context=context)
+
+                else: # Batch, interval, 8
+                    input = torch.cat([x_t.unsqueeze(dim=1), context], dim=1) # Batch, interval + 1, 8
+                    pred = self.net(input, beta=beta)
+
                 C_pred = pred
                 noise_pred = (x_t - (t_tmp - 1) * C_pred) / t_tmp.sqrt()
 
