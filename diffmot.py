@@ -83,7 +83,8 @@ class DiffMOT():
 
         num_batches = len(data_loader)
         
-        for batch in tqdm(data_loader):
+        for i, batch in enumerate(tqdm(data_loader)):
+            print(i)
             for k in batch:
                 batch[k] = batch[k].to(device=self.device, non_blocking=True)
 
