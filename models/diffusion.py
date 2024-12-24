@@ -162,10 +162,10 @@ class D2MP_OB(Module):
         if self.config.loss == 'l2':
             loss_C = F.mse_loss(C_pred.view(-1, point_dim), C.view(-1, point_dim), reduction=reduction)
             loss_noise = F.mse_loss(noise_pred.view(-1, point_dim), e_rand.view(-1, point_dim), reduction=reduction)
-            if self.config.network == 'linear':
-                predicted_previous_frame = C_pred[:, 4:] - C_pred[:, :4]
-                ground_truth_previous_frame = context[:, -1, 4:]
-                loss_distance = F.mse_loss(predicted_previous_frame, ground_truth_previous_frame, reduction=reduction)
+            # if self.config.network == 'linear':
+            #     predicted_previous_frame = C_pred[:, 4:] - C_pred[:, :4]
+            #     ground_truth_previous_frame = context[:, -1, 4:]
+            #     loss_distance = F.mse_loss(predicted_previous_frame, ground_truth_previous_frame, reduction=reduction)
         else:
             loss_C = F.smooth_l1_loss(C_pred.view(-1, point_dim), C.view(-1, point_dim), reduction=reduction)
             loss_noise = F.smooth_l1_loss(noise_pred.view(-1, point_dim), e_rand.view(-1, point_dim), reduction=reduction)
