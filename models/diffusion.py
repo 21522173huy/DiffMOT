@@ -99,7 +99,7 @@ class D2MP_OB(Module):
         self.net = net
         self.var_sched = var_sched
         self.eps = self.config.eps
-        self.weight = True
+        self.weight = config.weight
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     def q_sample(self, x_start, noise, t, C):
@@ -138,21 +138,23 @@ class D2MP_OB(Module):
         t = t.reshape(-1, 1)
         
         if context.dim() != 3: # Batch,, 64
-            print("context shape hihi", context.shape)
             pred = self.net(x_noisy, beta=beta, context=context)
 
         else: # Batch, interval, 8
-            print("context shape haha", context.shape)
             input = torch.cat([x_noisy.unsqueeze(dim=1), context], dim=1) # Batch, interval + 1, 8
             pred = self.net(input, beta=beta)
 
         C_pred = pred
         noise_pred = (x_noisy - (t - 1) * C_pred) / t.sqrt()
 
+        loss_distance = 0
+        weight_3 = 0
         if not self.weight:
-            weight_1 = 0.5
-            weight_2 = 0.5
+            weight_1 = self.config.weight_1
+            weight_2 = self.config.weight_2
+            weight_3 = self.config.weight_3
             reduction = 'mean'
+            print(f'Reduction: {reduction}')
         else:
             weight_1 = (t ** 2 - t + 1) / t
             weight_2 = (t ** 2 - t + 1) / (1 - t + self.eps)
@@ -161,11 +163,16 @@ class D2MP_OB(Module):
         if self.config.loss == 'l2':
             loss_C = F.mse_loss(C_pred.view(-1, point_dim), C.view(-1, point_dim), reduction=reduction)
             loss_noise = F.mse_loss(noise_pred.view(-1, point_dim), e_rand.view(-1, point_dim), reduction=reduction)
+            if self.config.network == 'linear':
+                predicted_previous_frame = C_pred[:, 4:] - C_pred[:, :4]
+                ground_truth_previous_frame = context[:, -1, 4:]
+                loss_distance = F.mse_loss(predicted_previous_frame, ground_truth_previous_frame, reduction=reduction)
         else:
             loss_C = F.smooth_l1_loss(C_pred.view(-1, point_dim), C.view(-1, point_dim), reduction=reduction)
             loss_noise = F.smooth_l1_loss(noise_pred.view(-1, point_dim), e_rand.view(-1, point_dim), reduction=reduction)
 
-        loss = weight_1 * loss_C + weight_2 * loss_noise
+        print(loss_C, loss_noise, loss_distance)
+        loss = weight_1 * loss_C + weight_2 * loss_noise + weight_3 * loss_distance
         loss = loss.mean()
 
         return loss
