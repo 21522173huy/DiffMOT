@@ -239,7 +239,7 @@ class DiffMOT():
     def _build_optimizer(self):
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.config.lr)
         self.scheduler = optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=0.98)
-        self.early_stopping = EarlyStopping(patience=self.config.patience, delta=self.config.delta)
+        self.early_stopping = EarlyStopping_Loss(patience=self.config.patience, delta=self.config.delta)
         print("> Optimizer built!")
 
     def _build_encoder(self):
