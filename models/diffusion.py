@@ -154,7 +154,6 @@ class D2MP_OB(Module):
             weight_2 = self.config.weight_2
             weight_3 = self.config.weight_3
             reduction = 'mean'
-            print(f'Reduction: {reduction}')
         else:
             weight_1 = (t ** 2 - t + 1) / t
             weight_2 = (t ** 2 - t + 1) / (1 - t + self.eps)
@@ -170,8 +169,7 @@ class D2MP_OB(Module):
         else:
             loss_C = F.smooth_l1_loss(C_pred.view(-1, point_dim), C.view(-1, point_dim), reduction=reduction)
             loss_noise = F.smooth_l1_loss(noise_pred.view(-1, point_dim), e_rand.view(-1, point_dim), reduction=reduction)
-
-        print(loss_C, loss_noise, loss_distance)
+            
         loss = weight_1 * loss_C + weight_2 * loss_noise + weight_3 * loss_distance
         loss = loss.mean()
 
