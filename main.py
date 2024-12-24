@@ -4,28 +4,14 @@ import argparse
 import yaml
 from easydict import EasyDict
 
-def str2bool(v):
-    if isinstance(v, bool):
-        return v
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
-        return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
-
 def parse_args():
     parser = argparse.ArgumentParser(
         description='Pytorch implementation of MID')
     parser.add_argument('--config', default='', help='Path to the config file')
     parser.add_argument('--dataset', default='', help='Dataset name')
-    parser.add_argument('--network', choices=['ReUNet', 'ReUNet+++', 'Smaller', 'New_ReUNet', 'linear'], help='Unet version')
-    parser.add_argument('--num_layers', type=int, default=1, help='Number of layers in the network')
-    parser.add_argument('--filters', type=int, nargs='+', help="List of filters")
-    parser.add_argument('--skip_connection', type=str2bool, default=True, help='Skp connection')
+    parser.add_argument('--network', choices=['ReUNet', 'ReUNet+++', 'Smaller'], help='Unet version')
     parser.add_argument('--data_dir', default=None, help='Path to the data directory')
     parser.add_argument('--epochs', type=int, default=None, help='Number of epochs')
-    parser.add_argument('--early_stopping', choices=['loss', 'iou'])
     return parser.parse_args()
 
 def main():
@@ -47,13 +33,6 @@ def main():
         config.epochs = args.epochs
     if args.network is not None:
         config.network = args.network
-    if args.num_layers is not None:
-        config.num_layers = args.num_layers
-    if args.filters is not None:
-        config.filters = args.filters
-    if args.skip_connection is not None:
-        config.skip_connection = args.skip_connection
-    config.early_stopping = args.early_stopping
 
     agent = DiffMOT(config)
 
