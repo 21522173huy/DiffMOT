@@ -60,31 +60,20 @@ class DiffMOT():
         self._build()
 
     def generate(self, conds, sample = 1, bestof = True, flexibility = 0.0, ret_traj = False):
-        if self.config.network != 'linear':
-            cond_encodeds = self.model.encoder(conds)
-        else:
-            cond_encodeds = conds
+        
+        cond_encodeds = self.model.encoder(conds)
         track_pred = self.model.diffusion.sample(cond_encodeds, sample, bestof, point_dim = self.point_dim, flexibility=flexibility, ret_traj=ret_traj)
         return track_pred.squeeze(dim=0)
 
     def step(self, data_loader, train=True):
         self.model.train() if train else self.model.eval()
         
-        if self.config.network != 'linear':
-            total_loss = 0
-            total_iou = 0
-            total_ade = 0
-        else:
-            total_loss = 0
-            total_iou_by_delta = 0
-            total_iou_direct = 0
-            total_ade_by_delta = 0
-            total_ade_direct = 0
-
+        total_loss = 0
+        total_iou = 0
+        total_ade = 0
         num_batches = len(data_loader)
         
-        for i, batch in enumerate(tqdm(data_loader)):
-            print(i)
+        for batch in tqdm(data_loader):
             for k in batch:
                 batch[k] = batch[k].to(device=self.device, non_blocking=True)
 
@@ -107,53 +96,22 @@ class DiffMOT():
             width = batch['width'] # Batch_size
             height = batch['height'] # Batch_size
 
-            if predictions.shape[1] == 4:
-                predictions = predictions + dets # Batch_size, 4
-                original_preds = original_shape(predictions, width, height) # Batch_size, 4
-                original_gts = original_shape(targets, width, height) # Batch_size, 4
+            predictions = predictions + dets # Batch_size, 4
+            original_preds = original_shape(predictions, width, height) # Batch_size, 4
+            original_gts = original_shape(targets, width, height) # Batch_size, 4
 
-                total_iou += calculate_iou(original_preds, original_gts)
-                total_ade += calculate_ade(original_preds, original_gts)
+            total_iou += calculate_iou(original_preds, original_gts)
+            total_ade += calculate_ade(original_preds, original_gts)
 
-                mean_loss = total_loss / num_batches
-                mean_iou = total_iou / num_batches
-                mean_ade = total_ade / num_batches
+            mean_loss = total_loss / num_batches
+            mean_iou = total_iou / num_batches
+            mean_ade = total_ade / num_batches
 
-                return {
-                    'mean_loss': mean_loss,
-                    'mean_iou': mean_iou,
-                    'mean_ade': mean_ade
-                }
-
-            elif predictions.shape[1] == 8:
-                predictions_by_delta = predictions[:, 4:] + dets # Batch_size, 4
-                direct_predictions = predictions[:, :4] # Batch_size, 4
-
-                original_gts = original_shape(targets, width, height) # Batch_size, 4
-                original_preds_by_delta = original_shape(predictions_by_delta, width, height) # Batch_size, 4
-                original_direct_preds = original_shape(direct_predictions, width, height) # Batch_size, 4
-
-                total_iou_by_delta += calculate_iou(original_preds_by_delta, original_gts)
-                total_iou_direct += calculate_iou(original_direct_preds, original_gts)
-
-                total_ade_by_delta += calculate_ade(original_preds_by_delta, original_gts)
-                total_ade_direct += calculate_ade(original_direct_preds, original_gts)
-        
-                mean_loss = total_loss / num_batches
-                
-                mean_iou_by_delta = total_iou_by_delta / num_batches
-                mean_iou_direct = total_iou_direct / num_batches
-
-                mean_ade_by_delta = total_ade_by_delta / num_batches
-                mean_ade_direct = total_ade_direct / num_batches
-                
-                return {
-                    'mean_loss': mean_loss,
-                    'mean_iou_by_delta': mean_iou_by_delta,
-                    'mean_ade_by_delta': mean_ade_by_delta,
-                    'mean_iou_direct': mean_iou_direct,
-                    'mean_ade_direct': mean_ade_direct
-                }
+            return {
+                'mean_loss': mean_loss,
+                'mean_iou': mean_iou,
+                'mean_ade': mean_ade
+            }
 
     def train(self):
         for epoch in range(1, self.config.epochs + 1):
@@ -164,36 +122,20 @@ class DiffMOT():
 
             self.scheduler.step()
 
-            if self.config.network != 'linear':
-                print(f"Epoch {epoch}/{self.config.epochs}")
-                print(f"Train - Loss: {train_metrics['mean_loss']:.6f}, IoU: {train_metrics['mean_iou']:.6f}, ADE: {train_metrics['mean_ade']:.6f}")
-                print(f"Val   - Loss: {val_metrics['mean_loss']:.6f}, IoU: {val_metrics['mean_iou']:.6f}, ADE: {val_metrics['mean_ade']:.6f}")
+            print(f"Epoch {epoch}/{self.config.epochs}")
+            print(f"Train - Loss: {train_metrics['mean_loss']:.6f}, IoU: {train_metrics['mean_iou']:.6f}, ADE: {train_metrics['mean_ade']:.6f}")
+            print(f"Val   - Loss: {val_metrics['mean_loss']:.6f}, IoU: {val_metrics['mean_iou']:.6f}, ADE: {val_metrics['mean_ade']:.6f}")
 
-                # Early Stopping
-                if self.config.early_stopping == 'loss':
-                    score = val_metrics['mean_loss']
-                elif self.config.early_stopping == 'iou':
-                    score = val_metrics['mean_iou']
+            # Early Stopping
+            if self.config.early_stopping == 'loss':
+                score = val_metrics['mean_loss']
+            elif self.config.early_stopping == 'iou':
+                score = val_metrics['mean_iou']
 
-                self.early_stopping(score, self.model, epoch, self.optimizer, self.scheduler, self.model_dir, self.config.dataset)
-                if self.early_stopping.early_stop:
-                    print("Early stopping")
-                    break
-            else:
-                print(f"Epoch {epoch}/{self.config.epochs}")
-                print(f"Train - Loss: {train_metrics['mean_loss']:.6f}, IoU by delta: {train_metrics['mean_iou_by_delta']:.6f}, ADE by delta: {train_metrics['mean_ade_by_delta']:.6f}, IoU direct: {train_metrics['mean_iou_direct']:.6f}, ADE direct: {train_metrics['mean_ade_direct']:.6f}")
-                print(f"Val   - Loss: {val_metrics['mean_loss']:.6f}, IoU by delta: {val_metrics['mean_iou_by_delta']:.6f}, ADE by delta: {val_metrics['mean_ade_by_delta']:.6f}, IoU direct: {val_metrics['mean_iou_direct']:.6f}, ADE direct: {val_metrics['mean_ade_direct']:.6f}")
-
-                # Early Stopping
-                if self.config.early_stopping == 'loss':
-                    score = val_metrics['mean_loss']
-                elif self.config.early_stopping == 'iou':
-                    score = val_metrics['mean_iou_by_delta']
-
-                self.early_stopping(score, self.model, epoch, self.optimizer, self.scheduler, self.model_dir, self.config.dataset)
-                if self.early_stopping.early_stop:
-                    print("Early stopping")
-                    break
+            self.early_stopping(score, self.model, epoch, self.optimizer, self.scheduler, self.model_dir, self.config.dataset)
+            if self.early_stopping.early_stop:
+                print("Early stopping")
+                break
 
     # def eval(self):
     #     det_root = self.config.det_dir
@@ -313,9 +255,6 @@ class DiffMOT():
     def _build_model(self):
         """ Define Model """
         config = self.config
-        if config.network =='linear':
-            self.point_dim = 8
-        else: self.point_dim = 4
 
         # Chỗ này nhớ nha pls
         model = D2MP(config, encoder=self.encoder)
