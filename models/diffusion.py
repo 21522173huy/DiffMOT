@@ -140,13 +140,13 @@ class D2MP_OB(Module):
         x_noisy = self.q_sample(x_start=x_0, noise=e_rand, t=t, C=C)
         t = t.reshape(-1, 1)
 
-        pred = self.net(x_noisy, beta=beta, context=context)
+        pred = self.net(x_noisy, beta=beta, context=context) # B, 4
         C_pred = pred
         noise_pred = (x_noisy - (t - 1) * C_pred) / t.sqrt()
         if not self.weight:
-            loss_C = F.smooth_l1_loss(C_pred.view(-1, point_dim), C.view(-1, point_dim), reduction='mean')
+            loss_C = F.mse_loss(C_pred.view(-1, point_dim), C.view(-1, point_dim), reduction='mean') # C_pred là delta_pred, C là delta_gt
             # loss_x0 = F.smooth_l1_loss(x_rec.view(-1, point_dim), x_0.view(-1, point_dim), reduction='mean')
-            loss_noise = F.smooth_l1_loss(noise_pred.view(-1, point_dim), e_rand.view(-1, point_dim), reduction='mean')
+            loss_noise = F.mse_loss(noise_pred.view(-1, point_dim), e_rand.view(-1, point_dim), reduction='mean') # 
             loss = 0.5 * loss_C + 0.5 * loss_noise
         else:
             simple_weight1 = (t ** 2 - t + 1) / t
@@ -155,9 +155,9 @@ class D2MP_OB(Module):
             # simple_weight1 = (t + 1) / t
             # simple_weight2 = (2 - t) / (1 - t + self.eps)
 
-            loss_C = F.smooth_l1_loss(C_pred.view(-1, point_dim), C.view(-1, point_dim), reduction='none')
+            loss_C = F.mse_loss(C_pred.view(-1, point_dim), C.view(-1, point_dim), reduction='none')
             # loss_x0 = F.smooth_l1_loss(x_rec.view(-1, point_dim), x_0.view(-1, point_dim), reduction='none')
-            loss_noise = F.smooth_l1_loss(noise_pred.view(-1, point_dim), e_rand.view(-1, point_dim), reduction='none')
+            loss_noise = F.mse_loss(noise_pred.view(-1, point_dim), e_rand.view(-1, point_dim), reduction='none')
             loss = simple_weight1 * loss_C + simple_weight2 * loss_noise
             loss = loss.mean()
 

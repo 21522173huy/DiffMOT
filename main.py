@@ -19,7 +19,7 @@ def parse_args():
         description='Pytorch implementation of MID')
     parser.add_argument('--config', default='', help='Path to the config file')
     parser.add_argument('--dataset', default='', help='Dataset name')
-    parser.add_argument('--network', choices=['ReUNet', 'ReUNet+++', 'Smaller', 'New_ReUNet'], help='Unet version')
+    parser.add_argument('--network', choices=['ReUNet', 'ReUNet+++', 'Smaller', 'New_ReUNet', 'linear'], help='Unet version')
     parser.add_argument('--num_layers', type=int, default=1, help='Number of layers in the network')
     parser.add_argument('--filters', type=list, default=[16, 64, 128, 256], help='Depth of the network')
     parser.add_argument('--skip_connection', type=str2bool, default=True, help='Skp connection')

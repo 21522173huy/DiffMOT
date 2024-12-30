@@ -145,6 +145,6 @@ class History_motion_embedding(nn.Module):
             en_out = self.trca[i](src=encoder_patch, pos=pos)
             encoder_patch = en_out
 
-        out = en_out[-1].view(b, 1, d).contiguous()
+        out = en_out[0].view(b, 1, d).contiguous()
         return out
 

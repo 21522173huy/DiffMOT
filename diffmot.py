@@ -60,6 +60,7 @@ class DiffMOT():
         self._build()
 
     def generate(self, conds, sample = 1, bestof = True, flexibility = 0.0, ret_traj = False):
+
         cond_encodeds = self.model.encoder(conds)
         track_pred = self.model.diffusion.sample(cond_encodeds, sample, bestof, flexibility=flexibility, ret_traj=ret_traj)
         return track_pred.squeeze(dim=0)
@@ -89,43 +90,31 @@ class DiffMOT():
             # MeanIoU and MeanADE
             with torch.no_grad():
                 predictions = self.generate(conds = batch['condition'], sample = 1, bestof =  True, flexibility=0.0, ret_traj=False) # Batch_size, 4
-            dets = batch['condition'][:, 4, :4] # Batch_size, 4
-            predictions = predictions + dets # Batch_size, 4
 
+            dets = batch['condition'][:, 4, :4] # Batch_size, 4
             targets = batch['cur_bbox'] # Batch_size, 4
             width = batch['width'] # Batch_size
             height = batch['height'] # Batch_size
 
+            predictions_from_delta = predictions[:, 4:] + dets # Batch_size, 4
+            direct_prediction = predictions[:, :4]
+            
             original_preds = original_shape(predictions, width, height) # Batch_size, 4
             original_gts = original_shape(targets, width, height) # Batch_size, 4
 
             total_iou += calculate_iou(original_preds, original_gts)
             total_ade += calculate_ade(original_preds, original_gts)
-        
-        mean_loss = total_loss / num_batches
-        mean_iou = total_iou / num_batches
-        mean_ade = total_ade / num_batches
-        
-        return {
-            'mean_loss': mean_loss,
-            'mean_iou': mean_iou,
-            'mean_ade': mean_ade
-        }
 
-    def train(self):
-        for epoch in range(1, self.config.epochs + 1):
-            print("Training")
-            train_metrics = self.step(data_loader = self.train_dataloader, train=True)
-            print("Validation")
-            val_metrics = self.step(data_loader = self.val_dataloader, train=False)
+            mean_loss = total_loss / num_batches
+            mean_iou = total_iou / num_batches
+            mean_ade = total_ade / num_batches
 
-            self.scheduler.step()
+            return {
+                'mean_loss': mean_loss,
+                'mean_iou': mean_iou,
+                'mean_ade': mean_ade
+            }
 
-            print(f"Epoch {epoch}/{self.config.epochs}")
-            print(f"Train - Loss: {train_metrics['mean_loss']:.6f}, IoU: {train_metrics['mean_iou']:.6f}, ADE: {train_metrics['mean_ade']:.6f}")
-            print(f"Val   - Loss: {val_metrics['mean_loss']:.6f}, IoU: {val_metrics['mean_iou']:.6f}, ADE: {val_metrics['mean_ade']:.6f}")
-
-            # Early Stopping
     def train(self):
         for epoch in range(1, self.config.epochs + 1):
             print("Training")
@@ -265,6 +254,8 @@ class DiffMOT():
     def _build_model(self):
         """ Define Model """
         config = self.config
+
+        # Chỗ này nhớ nha pls
         model = D2MP(config, encoder=self.encoder)
 
         self.model = model

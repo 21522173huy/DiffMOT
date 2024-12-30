@@ -4,6 +4,7 @@ from torch.nn import Module
 import models.diffusion as diffusion
 from models.diffusion import VarianceSchedule, D2MP_OB
 from models.unet_variants import ReUNet3Plus, ReUNet, ReUNet3Plus_Smaller, New_ReUNet
+from models.simple import LinearNetwork
 import numpy as np
 
 class D2MP(Module):
@@ -22,6 +23,8 @@ class D2MP(Module):
           net = ReUNet3Plus_Smaller(num_layers = config.num_layers , filters = config.filters, skip_connection = config.skip_connection)
         elif network == 'New_ReUNet':
           net = New_ReUNet(num_layers = config.num_layers , filters = config.filters, skip_connection = config.skip_connection)
+        elif network == 'linear':
+           net = LinearNetwork()
 
         self.diffusion = D2MP_OB(
             # net = self.diffnet(point_dim=2, context_dim=config.encoder_dim, tf_layer=config.tf_layer, residual=False),
@@ -48,6 +51,7 @@ class D2MP(Module):
             cond_encodeds.append(tmp_conds.unsqueeze(0))
         cond_encodeds = torch.cat(cond_encodeds)
         cond_encodeds = self.encoder(cond_encodeds)
+
         track_pred = self.diffusion.sample(cond_encodeds, sample, bestof, flexibility=flexibility, ret_traj=ret_traj)
         return track_pred.cpu().detach().numpy()
 
