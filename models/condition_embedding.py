@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange, repeat
+from .components import MLP
 
 class PositionEmbeddingSine(nn.Module):
     """
@@ -111,7 +112,6 @@ class TransformerEncoderLayer(nn.Module):
         return self.forward_post(src, src_mask, src_key_padding_mask, pos)
 
 
-
 class History_motion_embedding(nn.Module):
     def __init__(self, d_model=256, nhead=8, dim_feedforward=512, dropout=0.1,
                  activation='relu', normalize_before=False, pos_type='sin'):
@@ -126,6 +126,9 @@ class History_motion_embedding(nn.Module):
         self.proj = nn.Linear(8, d_model)
         if pos_type == 'sin':
             self.pose_encoding = PositionEmbeddingSine(normalize=True)
+
+        self.norm = nn.LayerNorm(d_model)
+        self.head = nn.Linear(d_model, 4)
 
 
     def forward(self, x):
@@ -145,6 +148,7 @@ class History_motion_embedding(nn.Module):
             en_out = self.trca[i](src=encoder_patch, pos=pos)
             encoder_patch = en_out
 
-        out = en_out[-1].view(b, 1, d).contiguous()
+        feature = en_out[-1].view(b, 1, d).contiguous()
+        out = self.head(self.norm(feature)).squeeze(1)
         return out
 
