@@ -5,7 +5,7 @@ eval_mode: True
 # optimizer
 lr: 0.0001
 # train
-data_dir: '/content/DiffMOT/danctrack/dancetrack/trackers_gt_t/'
+data_dir: '/content/DiffMOT/danctrack/dancetrack/trackers_gt_t'
 diffnet: HMINet
 interval: 9
 augment: True
