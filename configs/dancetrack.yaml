@@ -33,7 +33,7 @@ epochs: 200
 batch_size: 2048
 seed: 123
 eval_every: 20
-gpus: [0,1,2,3]
+gpus: [0,1]
 
 # Testing
 eval_at: 800

@@ -13,7 +13,7 @@ from models.autoencoder import D2MP
 from models.condition_embedding import History_motion_embedding
 
 import time
-# from tracker.DiffMOTtracker import diffmottracker
+from tracker.DiffMOTtracker import diffmottracker
 
 from tracking_utils.log import logger
 from tracking_utils.timer import Timer
@@ -130,64 +130,64 @@ class DiffMOT():
             print(
                 f"Val   - Loss: {val_metrics['mean_loss']:.6f}, IoU: {val_metrics['mean_iou']:.6f}, ADE: {val_metrics['mean_ade']:.6f}")
 
-    # def eval(self):
-    #     det_root = self.config.det_dir
-    #     img_root = det_root.replace('/detections/', '/')
+    def eval(self):
+        det_root = self.config.det_dir
+        img_root = det_root.replace('/detections/', '/')
 
-    #     seqs = [s for s in os.listdir(det_root)]
-    #     seqs.sort()
+        seqs = [s for s in os.listdir(det_root)]
+        seqs.sort()
 
-    #     for seq in seqs:
-    #         print(seq)
-    #         det_path = osp.join(det_root, seq)
-    #         img_path = osp.join(img_root, seq, 'img1')
+        for seq in seqs:
+            print(seq)
+            det_path = osp.join(det_root, seq)
+            img_path = osp.join(img_root, seq, 'img1')
 
-    #         info_path = osp.join(self.config.info_dir, seq, 'seqinfo.ini')
-    #         seq_info = open(info_path).read()
-    #         seq_width = int(seq_info[seq_info.find('imWidth=') + 8:seq_info.find('\nimHeight')])
-    #         seq_height = int(seq_info[seq_info.find('imHeight=') + 9:seq_info.find('\nimExt')])
+            info_path = osp.join(self.config.info_dir, seq, 'seqinfo.ini')
+            seq_info = open(info_path).read()
+            seq_width = int(seq_info[seq_info.find('imWidth=') + 8:seq_info.find('\nimHeight')])
+            seq_height = int(seq_info[seq_info.find('imHeight=') + 9:seq_info.find('\nimExt')])
 
-    #         tracker = diffmottracker(self.config)
-    #         timer = Timer()
-    #         results = []
-    #         frame_id = 0
+            tracker = diffmottracker(self.config)
+            timer = Timer()
+            results = []
+            frame_id = 0
 
-    #         frames = [s for s in os.listdir(det_path)]
-    #         frames.sort()
-    #         imgs = [s for s in os.listdir(img_path)]
-    #         imgs.sort()
+            frames = [s for s in os.listdir(det_path)]
+            frames.sort()
+            imgs = [s for s in os.listdir(img_path)]
+            imgs.sort()
 
-    #         for i, f in enumerate(frames):
-    #             if frame_id % 10 == 0:
-    #                 logger.info('Processing frame {} ({:.2f} fps)'.format(frame_id, 1. / max(1e-5, timer.average_time)))
+            for i, f in enumerate(frames):
+                if frame_id % 10 == 0:
+                    logger.info('Processing frame {} ({:.2f} fps)'.format(frame_id, 1. / max(1e-5, timer.average_time)))
 
-    #             timer.tic()
-    #             f_path = osp.join(det_path, f)
-    #             dets = np.loadtxt(f_path, dtype=np.float32, delimiter=',').reshape(-1, 6)[:, 1:6]
+                timer.tic()
+                f_path = osp.join(det_path, f)
+                dets = np.loadtxt(f_path, dtype=np.float32, delimiter=',').reshape(-1, 6)[:, 1:6]
 
-    #             im_path = osp.join(img_path, imgs[i])
-    #             # img = cv2.imread(im_path)
-    #             tag = f"{seq}:{frame_id+1}"
-    #             # track
-    #             # online_targets = tracker.update(dets, self.model, frame_id, seq_width, seq_height, tag, img)
-    #             online_targets = tracker.update(dets, self.model, frame_id, seq_width, seq_height, tag)
-    #             online_tlwhs = []
-    #             online_ids = []
-    #             for t in online_targets:
-    #                 tlwh = t.tlwh
-    #                 tid = t.track_id
-    #                 online_tlwhs.append(tlwh)
-    #                 online_ids.append(tid)
-    #             timer.toc()
-    #             # save results
-    #             results.append((frame_id + 1, online_tlwhs, online_ids))
-    #             frame_id += 1
+                im_path = osp.join(img_path, imgs[i])
+                # img = cv2.imread(im_path)
+                tag = f"{seq}:{frame_id+1}"
+                # track
+                # online_targets = tracker.update(dets, self.model, frame_id, seq_width, seq_height, tag, img)
+                online_targets = tracker.update(dets, self.model, frame_id, seq_width, seq_height, tag)
+                online_tlwhs = []
+                online_ids = []
+                for t in online_targets:
+                    tlwh = t.tlwh
+                    tid = t.track_id
+                    online_tlwhs.append(tlwh)
+                    online_ids.append(tid)
+                timer.toc()
+                # save results
+                results.append((frame_id + 1, online_tlwhs, online_ids))
+                frame_id += 1
 
-    #         tracker.dump_cache()
-    #         result_root = self.config.save_dir
-    #         mkdirs(result_root)
-    #         result_filename = osp.join(result_root, '{}.txt'.format(seq))
-    #         write_results(result_filename, results)
+            tracker.dump_cache()
+            result_root = self.config.save_dir
+            mkdirs(result_root)
+            result_filename = osp.join(result_root, '{}.txt'.format(seq))
+            write_results(result_filename, results)
 
     def _build(self):
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -236,6 +236,32 @@ class DiffMOT():
     # def _build_encoder(self):
     #     self.encoder = History_motion_embedding()
 
+    def load_checkpoint(self):
+        """
+        Load checkpoint for the model, optimizer, and scheduler.
+        
+        Args:
+            model (torch.nn.Module): The model to load the state dictionary into.
+            optimizer (torch.optim.Optimizer): The optimizer to load the state dictionary into.
+            scheduler (torch.optim.lr_scheduler._LRScheduler): The scheduler to load the state dictionary into.
+            checkpoint_path (str): Path to the checkpoint file.
+            device (str): Device to load the model on ('cpu' or 'cuda').
+        
+        Returns:
+            int: The epoch at which the checkpoint was saved.
+        """ 
+        state_dict = self.checkpoint['model_state_dict']
+        
+        # Check if the system has multiple GPUs
+        if torch.cuda.device_count() > 1:
+            self.model.load_state_dict(state_dict)
+        else:
+            # Remove 'module.' prefix if present
+            if 'module.' in list(state_dict.keys())[0]:
+                new_state_dict = {k.replace('module.', ''): v for k, v in state_dict.items()}
+                state_dict = new_state_dict 
+            self.model.load_state_dict(state_dict)
+
     def _build_model(self):
         """ Define Model """
         config = self.config
@@ -250,7 +276,9 @@ class DiffMOT():
             self.model = self.model.eval()
 
         if self.config.eval_mode:
-            self.model.load_state_dict({k.replace('module.', ''): v for k, v in self.checkpoint['ddpm'].items()})
+            self.checkpoint = torch.load(config.checkpoint_path, map_location = torch.device(self.device))
+            self.load_checkpoint()
+            print('Model loaded from checkpoint successfully!')
 
         params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
         print("> Model built!")

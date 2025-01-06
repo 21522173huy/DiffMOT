@@ -25,6 +25,7 @@ info_dir: '/content/DiffMOT/danctrack/dancetrack/test'
 reid_dir: "/content/DiffMOT"
 save_dir: "/content/DiffMOT/rerults"
 eval_expname: mot_ddm_1000_deeper
+checkpoint_path: experiments/lt_ddm_1000_deeper/dancetrack_epoch200.pt
 high_thres: 0.6
 low_thres: 0.4
 w_assoc_emb: 2.2

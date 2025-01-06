@@ -1,4 +1,3 @@
-
 from diffmot import DiffMOT
 import argparse
 import yaml
@@ -11,7 +10,6 @@ def parse_args():
     parser.add_argument('--dataset', default='', help='Dataset name')
     parser.add_argument('--network', choices=['ReUNet', 'ReUNet+++', 'Smaller'], help='Unet version')
     parser.add_argument('--data_dir', default=None, help='Path to the data directory')
-    parser.add_argument('--epochs', type=int, default=None, help='Number of epochs')
     return parser.parse_args()
 
 def main():
