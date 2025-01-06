@@ -56,21 +56,6 @@ def custom_collate_fn(batch):
             del sample['image_path']
     return torch.utils.data.default_collate(batch)
 
-def save_checkpoint(self, epoch, is_best=False):
-    checkpoint_dir = os.path.join(self.model_dir, f"{self.config.dataset}_epoch{epoch}.pt")
-    checkpoint = {
-        'epoch': epoch,
-        'model_state_dict': self.model.state_dict(),
-        'optimizer_state_dict': self.optimizer.state_dict(),
-        'scheduler_state_dict': self.scheduler.state_dict(),
-    }
-    torch.save(checkpoint, checkpoint_dir)
-    if is_best:
-        best_checkpoint_dir = os.path.join(self.model_dir, f"{self.config.dataset}_best.pt")
-        torch.save(checkpoint, best_checkpoint_dir)
-    print(f"> Checkpoint saved at {checkpoint_dir}")
-
-
 class DiffMOT():
     def __init__(self, config):
         self.config = config
@@ -82,6 +67,20 @@ class DiffMOT():
     #     track_pred = self.model.diffusion.sample(cond_encodeds, sample, bestof, flexibility=flexibility,
     #                                              ret_traj=ret_traj)
     #     return track_pred.squeeze(dim=0)
+
+    def save_checkpoint(self, epoch, is_best=False):
+        checkpoint_dir = os.path.join(self.model_dir, f"{self.config.dataset}_epoch{epoch}.pt")
+        checkpoint = {
+            'epoch': epoch,
+            'model_state_dict': self.model.state_dict(),
+            'optimizer_state_dict': self.optimizer.state_dict(),
+            'scheduler_state_dict': self.scheduler.state_dict(),
+        }
+        torch.save(checkpoint, checkpoint_dir)
+        if is_best:
+            best_checkpoint_dir = os.path.join(self.model_dir, f"{self.config.dataset}_best.pt")
+            torch.save(checkpoint, best_checkpoint_dir)
+        print(f"> Checkpoint saved at {checkpoint_dir}")
 
     def step(self, data_loader, train=True):
         self.model.train() if train else self.model.eval()
