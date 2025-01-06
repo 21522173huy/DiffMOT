@@ -220,10 +220,10 @@ class DiffMOT():
         self.log.info(self.config.dataset)
         self.log.info("\n")
 
-        if self.config.eval_mode:
-            epoch = self.config.eval_at
-            checkpoint_dir = osp.join(self.model_dir, f"{self.config.dataset}_epoch{epoch}.pt")
-            self.checkpoint = torch.load(checkpoint_dir, map_location=self.device)
+        # if self.config.eval_mode:
+        #     epoch = self.config.eval_at
+        #     checkpoint_dir = osp.join(self.model_dir, f"{self.config.dataset}_epoch{epoch}.pt")
+        #     self.checkpoint = torch.load(checkpoint_dir, map_location=self.device)
 
         print("> Directory built!")
 
