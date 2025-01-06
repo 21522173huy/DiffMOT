@@ -27,8 +27,6 @@ def main():
     # Update config with command-line arguments if provided
     if args.data_dir is not None:
         config.data_dir = args.data_dir
-    if args.epochs is not None:
-        config.epochs = args.epochs
     if args.network is not None:
         config.network = args.network
 
