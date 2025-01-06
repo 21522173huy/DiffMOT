@@ -56,6 +56,20 @@ def custom_collate_fn(batch):
             del sample['image_path']
     return torch.utils.data.default_collate(batch)
 
+def save_checkpoint(self, epoch, is_best=False):
+    checkpoint_dir = os.path.join(self.model_dir, f"{self.config.dataset}_epoch{epoch}.pt")
+    checkpoint = {
+        'epoch': epoch,
+        'model_state_dict': self.model.state_dict(),
+        'optimizer_state_dict': self.optimizer.state_dict(),
+        'scheduler_state_dict': self.scheduler.state_dict(),
+    }
+    torch.save(checkpoint, checkpoint_dir)
+    if is_best:
+        best_checkpoint_dir = os.path.join(self.model_dir, f"{self.config.dataset}_best.pt")
+        torch.save(checkpoint, best_checkpoint_dir)
+    print(f"> Checkpoint saved at {checkpoint_dir}")
+
 
 class DiffMOT():
     def __init__(self, config):
@@ -116,6 +130,7 @@ class DiffMOT():
         }
 
     def train(self):
+        best_iou = float(-1)
         for epoch in range(1, self.config.epochs + 1):
             print("Training")
             train_metrics = self.step(data_loader=self.train_dataloader, train=True)
@@ -129,7 +144,10 @@ class DiffMOT():
                 f"Train - Loss: {train_metrics['mean_loss']:.6f}, IoU: {train_metrics['mean_iou']:.6f}, ADE: {train_metrics['mean_ade']:.6f}")
             print(
                 f"Val   - Loss: {val_metrics['mean_loss']:.6f}, IoU: {val_metrics['mean_iou']:.6f}, ADE: {val_metrics['mean_ade']:.6f}")
-
+            
+            self.save_checkpoint(epoch, is_best=(val_metrics['mean_iou'] > best_iou))
+            if val_metrics['mean_iou'] > best_iou:
+                best_iou = val_metrics['mean_iou']
     # def eval(self):
     #     det_root = self.config.det_dir
     #     img_root = det_root.replace('/detections/', '/')
