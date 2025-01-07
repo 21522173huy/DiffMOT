@@ -178,8 +178,8 @@ class DiffMOT():
                 # img = cv2.imread(im_path)
                 tag = f"{seq}:{frame_id+1}"
                 # track
-                # online_targets = tracker.update(dets, self.model, frame_id, seq_width, seq_height, tag, img)
-                online_targets = tracker.update(dets, self.model, frame_id, seq_width, seq_height, tag)
+                online_targets = tracker.update(dets, self.model, frame_id, seq_width, seq_height, tag, img)
+                # online_targets = tracker.update(dets, self.model, frame_id, seq_width, seq_height, tag)
                 online_tlwhs = []
                 online_ids = []
                 for t in online_targets:
