@@ -193,11 +193,11 @@ class DiffMOT():
             print(
                 f"Val   - Loss: {val_metrics['mean_loss']:.6f}, IoU: {val_metrics['mean_iou']:.6f}, ADE: {val_metrics['mean_ade']:.6f}")
 
-        if epoch % 2 == 0:
-            self.save_checkpoint(epoch, is_best=(val_metrics['mean_iou'] > best_iou))
-            
-        if val_metrics['mean_iou'] > best_iou:
-            best_iou = val_metrics['mean_iou']
+            if epoch % 2 == 0:
+                self.save_checkpoint(epoch, is_best=(val_metrics['mean_iou'] > best_iou))
+                
+            if val_metrics['mean_iou'] > best_iou:
+                best_iou = val_metrics['mean_iou']
             
     # def eval(self):
     #     det_root = self.config.det_dir
