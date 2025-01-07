@@ -112,7 +112,7 @@ class TransformerEncoderLayer(nn.Module):
         return self.forward_post(src, src_mask, src_key_padding_mask, pos)
 
 
-class History_motion_embedding(nn.Module):
+class History_motion_embedding(BasePositionPredictor):
     def __init__(self, d_model=256, nhead=8, dim_feedforward=512, dropout=0.1,
                  activation='relu', normalize_before=False, pos_type='sin'):
         super(History_motion_embedding, self).__init__()
@@ -145,10 +145,11 @@ class History_motion_embedding(nn.Module):
         encoder_patch = torch.cat((cls_tokens, q_patch), dim=0)
 
         for i in range(self.cascade_num):
-            en_out = self.trca[i](src=encoder_patch, pos=pos)
+            en_out = self.trca[i](src=encoder_patch, pos=pos) # 1+interval, B, 8
             encoder_patch = en_out
 
-        feature = en_out[-1].view(b, 1, d).contiguous()
-        out = self.head(self.norm(feature)).squeeze(1)
+        # feature = en_out[-1].view(b, 1, d).contiguous()
+        # out = self.head(self.norm(feature)).squeeze(1)
+        out = self.head(self.norm(en_out.permute(1, 0, 2))) # B, 1+interval, 4
         return out
 
