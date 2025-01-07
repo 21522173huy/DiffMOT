@@ -308,7 +308,7 @@ class DiffMOT():
     def _build_model(self):
         """ Define Model """
         config = self.config
-        model = History_motion_embedding()
+        model = History_motion_embedding(self.config)
 
         self.model = model
         self.model.to(self.device)
