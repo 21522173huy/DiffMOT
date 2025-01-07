@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange, repeat
 from .components import MLP
+from .Base import BasePositionPredictor
 
 class PositionEmbeddingSine(nn.Module):
     """
