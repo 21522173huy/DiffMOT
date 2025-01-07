@@ -128,14 +128,62 @@ class DiffMOT():
             'mean_iou': mean_iou,
             'mean_ade': mean_ade
         }
+    
+    def new_step(self, data_loader, train=True):
+        self.model.train() if train else self.model.eval()
+
+        total_loss = 0
+        total_iou = 0
+        total_ade = 0
+        num_batches = len(data_loader)
+
+        for batch in tqdm(data_loader):
+            for k in batch:
+                batch[k] = batch[k].to(device=self.device, non_blocking=True)
+
+            predictions = self.model(batch['condition']) # B, 1+interval, 4
+            ground_truth = torch.cat([batch['condition'][:, :, 4:], batch['delta_bbox'].unsqueeze(1)], dim=1) # B, 1+interval, 4
+
+            loss = self.criterion(predictions, ground_truth)
+
+            if train:
+                self.optimizer.zero_grad()
+                loss.backward()
+                self.optimizer.step()
+
+            total_loss += loss.item()
+
+            # Evaluate
+            dets = batch['condition'][:, 4, :4]  # Batch_size, 4
+            predictions = predictions[:, -1, :] + dets  # Batch_size, 4
+
+            targets = batch['cur_bbox']  # Batch_size, 4
+            width = batch['width']  # Batch_size
+            height = batch['height']  # Batch_size
+
+            original_preds = original_shape(predictions, width, height)  # Batch_size, 4
+            original_gts = original_shape(targets, width, height)  # Batch_size, 4
+
+            total_iou += calculate_iou(original_preds, original_gts)
+            total_ade += calculate_ade(original_preds, original_gts)
+
+        mean_loss = total_loss / num_batches
+        mean_iou = total_iou / num_batches
+        mean_ade = total_ade / num_batches
+
+        return {
+            'mean_loss': mean_loss,
+            'mean_iou': mean_iou,
+            'mean_ade': mean_ade
+        }
 
     def train(self):
         best_iou = float(-1)
         for epoch in range(1, self.config.epochs + 1):
             print("Training")
-            train_metrics = self.step(data_loader=self.train_dataloader, train=True)
+            train_metrics = self.new_step(data_loader=self.train_dataloader, train=True)
             print("Validation")
-            val_metrics = self.step(data_loader=self.val_dataloader, train=False)
+            val_metrics = self.new_step(data_loader=self.val_dataloader, train=False)
 
             self.scheduler.step()
 
