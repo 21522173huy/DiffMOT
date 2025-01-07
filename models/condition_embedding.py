@@ -114,9 +114,9 @@ class TransformerEncoderLayer(nn.Module):
 
 
 class History_motion_embedding(BasePositionPredictor):
-    def __init__(self, d_model=256, nhead=8, dim_feedforward=512, dropout=0.1,
+    def __init__(self, config, d_model=256, nhead=8, dim_feedforward=512, dropout=0.1,
                  activation='relu', normalize_before=False, pos_type='sin'):
-        super(History_motion_embedding, self).__init__()
+        super(History_motion_embedding, self).__init__(config)
         self.cascade_num = 6
         self.cls_token = nn.Parameter(torch.randn(1, 1, d_model))
         self.trca = nn.ModuleList()
